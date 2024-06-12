@@ -1,2 +1,2 @@
-# riscv-os
-building the risc-v operating system using rust
+# packet-route-tracer
+tool to tracer the route of a simple packet through a network
