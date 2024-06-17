@@ -7,29 +7,35 @@ import (
 )
 
 const (
-	HOST = "localhost"
+	HOST = "127.0.0.1"
 	PORT = "5000"
 	TYPE = "tcp"
 )
 
 func main() {
-	server, _ := net.Listen(TYPE, HOST+":"+PORT)
-	fmt.Println("server started. listening on ", HOST, ":", PORT)
+	server, _ := net.Listen("tcp", "127.0.0.1:8080")
+	fmt.Println("server started. listening on 127.0.0.1:8080")
 
-	defer server.Close()
 	for {
 		connection, err := server.Accept()
 		if err != nil {
 			os.Exit(1)
 		}
-		fmt.Println("client connection from addr = ", connection.RemoteAddr())
 
-		buffer := make([]byte, 1024)
-		msg_len, _ := connection.Read(buffer)
-
-		fmt.Println("received: ", string(buffer[:msg_len]))
-		connection.Close()
-
+		go handleRequest(connection)
 	}
+
+}
+
+func handleRequest(conn net.Conn) {
+	fmt.Println("client connection from addr = ", conn.RemoteAddr())
+
+	buffer := make([]byte, 1024)
+	msg_len, err := conn.Read(buffer)
+	if err != nil {
+		fmt.Println("error reading payload: ", err.Error())
+	}
+
+	fmt.Println("received: ", string(buffer[:msg_len]))
 
 }
