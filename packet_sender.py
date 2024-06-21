@@ -1,10 +1,9 @@
 import socket
 
-sender = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_TCP)
+sender = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_ICMP)
+# windows doesn't allow to send tcp packets (socket.IPPROTO_TCP) on raw sockets
+# had to switch to socket.IPPROTO_ICMP which was my  use case anyway
 sender.setsockopt(socket.IPPROTO_IP, socket.IP_HDRINCL, 1)
-
-
-# sniffer = socket.socket(socket.PF_PACKET, socket.SOCK_RAW, socket.ntohs(0x0003))
 
 
 def btb(num):
@@ -45,15 +44,14 @@ def make_packet(src, dst, ttl):
     return ip_header + icmp_header
 
 
-# b'E\x00\x00\x1c\xab\xcd\x00\x00@\x01k\xd8\xc0\xa8\x92\x83\x08\x08\x08\x08\x08\x00\xe5\xca\x124\x00\x01'
-# b'E\x00\x00\x1c\xab\xcd\x00\x00k\xd8@\x01k\xd8\xc0\xa8\x92\x83\x08\x08\x08\x08\x08\x00\xe5\xca\x124\x00\x01'
+def send_packet(time_to_live: int):
+    ip = socket.gethostbyname(socket.gethostname())
+    # print('host : ', socket.gethostname(), ip)
 
-if __name__ == '__main__':
-    src, src_addr = '192.168.146.131', b'\xc0\xa8\x92\x83'
+    src, src_addr = ip, b'\x0a\x00\x00\xea'  # '192.168.146.131', b'\xc0\xa8\x92\x83'
     dst, dst_addr = '8.8.8.8', b'\x08\x08\x08\x08'
-    ttl = b'\x40'
+    ttl = time_to_live.to_bytes(length=1, byteorder='big')
 
-    pk = make_packet(src_addr, dst_addr, ttl)
-    print(pk)
-    sender.sendto(pk, (dst, 0))
-    print('packet sent')
+    raw_packet = make_packet(src_addr, dst_addr, ttl)
+    sender.sendto(raw_packet, (dst, 0))
+    # print("packet sent")
